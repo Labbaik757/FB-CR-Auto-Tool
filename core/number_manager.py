@@ -2,14 +2,25 @@ import os
 import re
 import threading
 import openpyxl
-from ui.colors import GREEN, RED, WHITE, EKL, LINE
+from ui.colors import GREEN, RED, WHITE, YELLOW, EKL, LINE
 from core.settings_manager import load_settings
+from core.path_manager import is_termux_or_mobile, get_base_storage_dir
 
 file_lock = threading.Lock()
 
 MAX_FORGET_NUMBERS = 10000
 MAX_CONFIRM_ENTRIES = 5000
 CONFIRM_FILE = "Confirm_List.txt"
+NUMBER_LIST_FILE = "Number_List.txt"
+
+
+# Locate the active Number_List.txt path (checking mobile storage folder if on Termux)
+def get_number_list_filepath():
+    if is_termux_or_mobile():
+        sdcard_num_file = os.path.join(get_base_storage_dir(), NUMBER_LIST_FILE)
+        if os.path.exists(sdcard_num_file):
+            return sdcard_num_file
+    return NUMBER_LIST_FILE
 
 
 # Extract phone numbers from the best-matching column in an Excel file
@@ -48,11 +59,13 @@ def extract_from_excel(filename):
         return None, str(e)
 
 
-# Load phone numbers from Number_List.txt
-def load_numbers():
+# Load phone numbers from target file
+def load_numbers(filepath=None):
+    if filepath is None:
+        filepath = get_number_list_filepath()
     with file_lock:
         try:
-            with open("Number_List.txt", "r", encoding="utf-8", errors="ignore") as f:
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 return [line.strip() for line in f if line.strip()]
         except FileNotFoundError:
             return []
@@ -60,19 +73,26 @@ def load_numbers():
             return []
 
 
-# Save phone numbers to Number_List.txt
-def save_numbers(numbers):
-    with file_lock:
-        with open("Number_List.txt", "w", encoding="utf-8") as f:
-            for n in numbers:
-                f.write(n + "\n")
-
-
-# Remove a processed number from Number_List.txt (thread-safe)
-def remove_number(number):
+# Save phone numbers to target file
+def save_numbers(numbers, filepath=None):
+    if filepath is None:
+        filepath = get_number_list_filepath()
     with file_lock:
         try:
-            with open("Number_List.txt", "r", encoding="utf-8", errors="ignore") as f:
+            with open(filepath, "w", encoding="utf-8") as f:
+                for n in numbers:
+                    f.write(n + "\n")
+        except Exception:
+            pass
+
+
+# Remove a processed number from active file (thread-safe)
+def remove_number(number, filepath=None):
+    if filepath is None:
+        filepath = get_number_list_filepath()
+    with file_lock:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 lines = [line.strip() for line in f if line.strip()]
         except (FileNotFoundError, Exception):
             return
@@ -81,54 +101,117 @@ def remove_number(number):
             lines.remove(number)
 
         try:
-            with open("Number_List.txt", "w", encoding="utf-8") as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 for n in lines:
                     f.write(n + "\n")
         except Exception:
             pass
 
 
-# Route file input based on settings (txt, multi-excel, or auto-detect)
+# Prompt user to input a custom file path directly
+def _prompt_custom_file_path():
+    while True:
+        try:
+            print(f"{LINE}")
+            print(f" {YELLOW}[!] No input file detected automatically in target folder.")
+            custom_path = input(f" {GREEN}[{RED}●{GREEN}] Enter full path to file (.txt or .xlsx) {EKL} ").strip()
+            if not custom_path:
+                return None
+
+            # Strip surrounding quotes if user dragged/dropped or pasted with quotes
+            custom_path = custom_path.strip("\"'")
+
+            if not os.path.exists(custom_path):
+                print(f"{RED} File not found: {custom_path}")
+                retry = input(f" {WHITE}Try again? (Y/n) {EKL} ").strip().lower()
+                if retry in ("n", "no"):
+                    return None
+                continue
+
+            if custom_path.endswith(".xlsx"):
+                nums, err = extract_from_excel(custom_path)
+                if nums:
+                    if len(nums) > MAX_FORGET_NUMBERS:
+                        print(f"{RED} Too many numbers! Maximum {MAX_FORGET_NUMBERS} allowed.")
+                        return None
+                    save_numbers(nums)
+                    print(f" {GREEN}[{RED}●{GREEN}] Extracted {len(nums)} numbers from {custom_path}")
+                    return nums
+                else:
+                    print(f"{RED} Failed to extract numbers from Excel: {err}")
+                    return None
+            else:
+                numbers = load_numbers(custom_path)
+                if not numbers:
+                    print(f"{WHITE} File is empty.")
+                    return None
+                if len(numbers) > MAX_FORGET_NUMBERS:
+                    print(f"{RED} Too many numbers! Maximum {MAX_FORGET_NUMBERS} allowed.")
+                    return None
+                print(f" {GREEN}[{RED}●{GREEN}] Loaded {len(numbers)} numbers from {custom_path}")
+                return numbers
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            print(f"{RED} Error: {e}")
+            return None
+
+
+# Route file input based on settings and environment (Mobile / PC)
 def process_file_input():
     settings = load_settings()
     file_cfg = settings.get("file_input_settings", {})
     always_txt = file_cfg.get("always_use_txt", False)
     multi_excel = file_cfg.get("use_multiple_excel_files", False)
 
+    search_dir = get_base_storage_dir() if is_termux_or_mobile() else "."
+
     if always_txt:
-        return _load_txt()
+        return _load_txt(search_dir)
     if multi_excel:
-        return _load_multi_excel()
-    return _load_auto()
+        return _load_multi_excel(search_dir)
+    return _load_auto(search_dir)
 
 
 # Load numbers directly from Number_List.txt
-def _load_txt():
-    if not os.path.exists("Number_List.txt"):
-        print(f"{WHITE} 'Number_List.txt' file was not found.")
+def _load_txt(search_dir="."):
+    txt_path = os.path.join(search_dir, NUMBER_LIST_FILE)
+    if not os.path.exists(txt_path):
+        if is_termux_or_mobile():
+            return _prompt_custom_file_path()
+        print(f"{WHITE} '{NUMBER_LIST_FILE}' file was not found.")
         return []
-    numbers = load_numbers()
+
+    numbers = load_numbers(txt_path)
     if not numbers:
-        print(f"{WHITE} 'Number_List.txt' file is empty.")
+        print(f"{WHITE} '{txt_path}' file is empty.")
+        if is_termux_or_mobile():
+            return _prompt_custom_file_path()
         return []
+
     if len(numbers) > MAX_FORGET_NUMBERS:
         print(f"{RED} Too many numbers! Maximum {MAX_FORGET_NUMBERS} allowed.")
         print(f"{RED} You have {len(numbers)} numbers. Please reduce and try again.")
         return None
-    print(f" {GREEN}[{RED}●{GREEN}] Selected File {EKL} Number_List.txt")
+
+    print(f" {GREEN}[{RED}●{GREEN}] Selected File {EKL} {txt_path}")
     return numbers
 
 
-# Load and merge numbers from all Excel files in the directory
-def _load_multi_excel():
-    xlsx_files = [f for f in os.listdir('.') if f.endswith(".xlsx") and not f.startswith("~$")]
-    if not xlsx_files:
-        return _load_txt()
+# Load and merge numbers from all Excel files in the target directory
+def _load_multi_excel(search_dir="."):
+    xlsx_files = [
+        os.path.join(search_dir, f) for f in os.listdir(search_dir)
+        if f.endswith(".xlsx") and not f.startswith("~$")
+    ] if os.path.exists(search_dir) else []
 
-    print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files.")
+    if not xlsx_files:
+        return _load_txt(search_dir)
+
+    print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files in {search_dir}:")
     all_numbers = []
     for f in xlsx_files:
-        print(f"{WHITE} Extracting from {EKL} {f}...")
+        print(f"{WHITE} Extracting from {EKL} {os.path.basename(f)}...")
         nums, err = extract_from_excel(f)
         if nums:
             all_numbers.extend(nums)
@@ -138,6 +221,8 @@ def _load_multi_excel():
 
     if not all_numbers:
         print(f"{RED} No valid numbers found in any Excel files.")
+        if is_termux_or_mobile():
+            return _prompt_custom_file_path()
         return None
 
     all_numbers = list(set(all_numbers))
@@ -149,23 +234,35 @@ def _load_multi_excel():
 
     save_numbers(all_numbers)
     print(f"\n {GREEN}[{RED}●{GREEN}] Total Unique Numbers {EKL} {len(all_numbers)}")
-    print(f" {GREEN}[{RED}●{GREEN}] Saved to 'Number_List.txt'\n")
+    print(f" {GREEN}[{RED}●{GREEN}] Saved to '{NUMBER_LIST_FILE}'\n")
     return all_numbers
 
 
-# Auto-detect input source: use Excel if available, fall back to txt
-def _load_auto():
-    xlsx_files = [f for f in os.listdir('.') if f.endswith(".xlsx") and not f.startswith("~$")]
+# Auto-detect input source: use Excel if available, fallback to txt or custom path
+def _load_auto(search_dir="."):
+    xlsx_files = [
+        os.path.join(search_dir, f) for f in os.listdir(search_dir)
+        if f.endswith(".xlsx") and not f.startswith("~$")
+    ] if os.path.exists(search_dir) else []
+
+    txt_path = os.path.join(search_dir, NUMBER_LIST_FILE)
+
+    # If no excel and txt exists, load txt
     if not xlsx_files:
-        return _load_txt()
+        if os.path.exists(txt_path):
+            return _load_txt(search_dir)
+        # If mobile and no files found in repo folder, ask for custom path
+        if is_termux_or_mobile():
+            return _prompt_custom_file_path()
+        return _load_txt(search_dir)
 
     filename = None
     if len(xlsx_files) == 1:
         filename = xlsx_files[0]
     else:
-        print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files:")
+        print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files in {search_dir}:")
         for idx, f in enumerate(xlsx_files, 1):
-            print(f" {GREEN}[{RED}{idx}{GREEN}] {f}")
+            print(f" {GREEN}[{RED}{idx}{GREEN}] {os.path.basename(f)}")
         print(f"{LINE}")
         while True:
             try:
@@ -191,216 +288,10 @@ def _load_auto():
             return None
         save_numbers(nums)
         print(f" {GREEN}[{RED}●{GREEN}] Extracted {len(nums)} numbers from {filename}")
-        print(f" {GREEN}[{RED}●{GREEN}] Saved to 'Number_List.txt'\n")
+        print(f" {GREEN}[{RED}●{GREEN}] Saved to '{NUMBER_LIST_FILE}'\n")
         return nums
     else:
         print(f"{RED} Error: {err}")
+        if is_termux_or_mobile():
+            return _prompt_custom_file_path()
         return None
-
-
-# Load confirm list entries (number|otp format) from Confirm_List.txt
-def load_confirm_list():
-    with file_lock:
-        try:
-            with open(CONFIRM_FILE, "r", encoding="utf-8", errors="ignore") as f:
-                entries = []
-                for line in f:
-                    line = line.strip()
-                    if not line or "|" not in line:
-                        continue
-                    parts = line.split("|", 1)
-                    number = parts[0].strip()
-                    otp = parts[1].strip()
-                    if number and otp:
-                        entries.append((number, otp))
-                if not entries:
-                    print(f"{WHITE} '{CONFIRM_FILE}' is empty or has no valid entries.")
-                    return []
-                if len(entries) > MAX_CONFIRM_ENTRIES:
-                    print(f"{RED} Too many entries! Maximum {MAX_CONFIRM_ENTRIES} allowed.")
-                    print(f"{RED} You have {len(entries)} entries. Please reduce and try again.")
-                    return []
-                return entries
-        except FileNotFoundError:
-            print(f"{WHITE} '{CONFIRM_FILE}' file not found.")
-            return []
-        except Exception:
-            print(f"{RED} Error reading '{CONFIRM_FILE}'.")
-            return []
-
-
-FILTER_INPUT_FILE = "Filter_Input_Num.txt"
-MAX_FILTER_NUMBERS = 50000
-
-
-# Route filter input based on settings
-def load_filter_input():
-    settings = load_settings()
-    file_cfg = settings.get("file_input_settings", {})
-    always_txt = file_cfg.get("always_use_txt", False)
-    multi_excel = file_cfg.get("use_multiple_excel_files", False)
-
-    if always_txt:
-        return _load_filter_txt()
-    if multi_excel:
-        return _load_filter_multi_excel()
-    return _load_filter_auto()
-
-
-# Load filter numbers from Filter_Input_Num.txt
-def _load_filter_txt():
-    if not os.path.exists(FILTER_INPUT_FILE):
-        print(f"{WHITE} '{FILTER_INPUT_FILE}' file was not found.")
-        return []
-    numbers = load_filter_numbers()
-    if not numbers:
-        print(f"{WHITE} '{FILTER_INPUT_FILE}' file is empty.")
-        return []
-    if len(numbers) > MAX_FILTER_NUMBERS:
-        print(f"{RED} Too many numbers! Maximum {MAX_FILTER_NUMBERS} allowed.")
-        print(f"{RED} You have {len(numbers)} numbers. Please reduce and try again.")
-        return None
-    print(f" {GREEN}[{RED}●{GREEN}] Selected File {EKL} {FILTER_INPUT_FILE}")
-    return numbers
-
-
-# Read raw filter numbers from file
-def load_filter_numbers():
-    with file_lock:
-        try:
-            with open(FILTER_INPUT_FILE, "r", encoding="utf-8", errors="ignore") as f:
-                return [line.strip() for line in f if line.strip()]
-        except FileNotFoundError:
-            return []
-        except Exception:
-            return []
-
-
-# Save filter numbers to Filter_Input_Num.txt
-def save_filter_numbers(numbers):
-    with file_lock:
-        with open(FILTER_INPUT_FILE, "w", encoding="utf-8") as f:
-            for n in numbers:
-                f.write(n + "\n")
-
-
-# Load and merge filter numbers from all Excel files
-def _load_filter_multi_excel():
-    xlsx_files = [f for f in os.listdir('.') if f.endswith(".xlsx") and not f.startswith("~$")]
-    if not xlsx_files:
-        return _load_filter_txt()
-
-    print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files.")
-    all_numbers = []
-    for f in xlsx_files:
-        print(f"{WHITE} Extracting from {EKL} {f}...")
-        nums, err = extract_from_excel(f)
-        if nums:
-            all_numbers.extend(nums)
-            print(f"{GREEN}  -> Found {len(nums)} numbers.")
-        else:
-            print(f"{RED}  -> Failed: {err}")
-
-    if not all_numbers:
-        print(f"{RED} No valid numbers found in any Excel files.")
-        return None
-
-    all_numbers = list(set(all_numbers))
-
-    if len(all_numbers) > MAX_FILTER_NUMBERS:
-        print(f"{RED} Too many numbers! Maximum {MAX_FILTER_NUMBERS} allowed.")
-        print(f"{RED} Total found: {len(all_numbers)}. Please reduce files and try again.")
-        return None
-
-    save_filter_numbers(all_numbers)
-    print(f"\n {GREEN}[{RED}●{GREEN}] Total Unique Numbers {EKL} {len(all_numbers)}")
-    print(f" {GREEN}[{RED}●{GREEN}] Saved to '{FILTER_INPUT_FILE}'\n")
-    return all_numbers
-
-
-# Auto-detect filter input source
-def _load_filter_auto():
-    xlsx_files = [f for f in os.listdir('.') if f.endswith(".xlsx") and not f.startswith("~$")]
-    if not xlsx_files:
-        return _load_filter_txt()
-
-    filename = None
-    if len(xlsx_files) == 1:
-        filename = xlsx_files[0]
-    else:
-        print(f" {GREEN}[{RED}●{GREEN}] Found {len(xlsx_files)} Excel Files:")
-        for idx, f in enumerate(xlsx_files, 1):
-            print(f" {GREEN}[{RED}{idx}{GREEN}] {f}")
-        print(f"{LINE}")
-        while True:
-            try:
-                choice = input(f" {GREEN}[{RED}●{GREEN}] Select File (1-{len(xlsx_files)}) {EKL} ").strip()
-                if choice.isdigit():
-                    idx = int(choice) - 1
-                    if 0 <= idx < len(xlsx_files):
-                        filename = xlsx_files[idx]
-                        break
-                print(f"{RED} Invalid selection!")
-            except KeyboardInterrupt:
-                raise
-            except Exception:
-                pass
-
-    print(f" {GREEN}[{RED}●{GREEN}] Selected File {EKL} {filename}\n")
-    nums, err = extract_from_excel(filename)
-
-    if nums:
-        if len(nums) > MAX_FILTER_NUMBERS:
-            print(f"{RED} Too many numbers! Maximum {MAX_FILTER_NUMBERS} allowed.")
-            print(f"{RED} Found {len(nums)} numbers in {filename}. Please reduce and try again.")
-            return None
-        save_filter_numbers(nums)
-        print(f" {GREEN}[{RED}●{GREEN}] Extracted {len(nums)} numbers from {filename}")
-        print(f" {GREEN}[{RED}●{GREEN}] Saved to '{FILTER_INPUT_FILE}'\n")
-        return nums
-    else:
-        print(f"{RED} Error: {err}")
-        return None
-
-
-# Remove a processed number from Filter_Input_Num.txt (thread-safe)
-def remove_filter_number(number):
-    with file_lock:
-        try:
-            with open(FILTER_INPUT_FILE, "r", encoding="utf-8", errors="ignore") as f:
-                lines = [line.strip() for line in f if line.strip()]
-        except (FileNotFoundError, Exception):
-            return
-        if number in lines:
-            lines.remove(number)
-        try:
-            with open(FILTER_INPUT_FILE, "w", encoding="utf-8") as f:
-                for n in lines:
-                    f.write(n + "\n")
-        except Exception:
-            pass
-
-
-# Remove a specific confirm entry (number|otp pair) from Confirm_List.txt
-def remove_confirm_entry(number, otp):
-    with file_lock:
-        try:
-            with open(CONFIRM_FILE, "r", encoding="utf-8", errors="ignore") as f:
-                lines = [line.strip() for line in f if line.strip()]
-        except (FileNotFoundError, Exception):
-            return
-
-        new_lines = []
-        for line in lines:
-            if "|" in line:
-                parts = line.split("|", 1)
-                if parts[0].strip() == number and parts[1].strip() == otp:
-                    continue
-            new_lines.append(line)
-
-        try:
-            with open(CONFIRM_FILE, "w", encoding="utf-8") as f:
-                for line in new_lines:
-                    f.write(line + "\n")
-        except Exception:
-            pass

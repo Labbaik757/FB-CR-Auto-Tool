@@ -10,6 +10,11 @@
     "server_settings": {
         "tools_server_id": "none"
     },
+    "password_settings": {
+        "ask_for_password": true,
+        "default_password": "",
+        "use_random_password": true
+    },
     "proxy_settings": {
         "ask_for_proxy": true,
         "default_proxy": ""

@@ -1,21 +1,36 @@
 import json
 import time
 import random
-import string
 import re
 import os
+import threading
 from faker import Faker
 
-from ui.colors import GREEN, RED, WHITE, YELLOW, ORANGE, CYAN
+from ui.colors import GREEN, RED, WHITE, YELLOW, ORANGE
 from core.number_manager import remove_number
 from core.proxy_manager import format_proxy_for_requests
 from core.session_builder import create_http_session, build_request_context, setup_session_cookies
+from core.password_manager import generate_random_password
+from core.path_manager import get_output_filepaths
 
 fake = Faker()
+output_lock = threading.Lock()
 
 
-# Generate a random identity with name, birthday, gender and password
-def generate_identity():
+# Save successful account credentials across all configured output paths (thread-safe)
+def _save_success_output(record_line):
+    with output_lock:
+        for filepath in get_output_filepaths():
+            try:
+                os.makedirs(os.path.dirname(filepath), exist_ok=True)
+                with open(filepath, "a", encoding="utf-8") as f:
+                    f.write(record_line + "\n")
+            except Exception:
+                pass
+
+
+# Generate an identity with name, birthday, gender and password
+def generate_identity(password_config=None):
     gender = random.choice(['male', 'female'])
 
     if gender == 'male':
@@ -28,10 +43,12 @@ def generate_identity():
         sex_value = '1'
 
     dob = fake.date_of_birth(minimum_age=18, maximum_age=40)
-    password = ''.join(random.choices(
-        string.ascii_letters + string.digits + '!@#$%^&*',
-        k=random.randint(8, 14)
-    ))
+
+    # Determine password based on configuration
+    if password_config and password_config.get("type") == "fixed" and password_config.get("value"):
+        password = password_config["value"]
+    else:
+        password = generate_random_password()
 
     return {
         "first_name": first_name,
@@ -55,6 +72,7 @@ def create_worker(wid, phone_number, proxy_data, config, counter):
     device_type = config.get("device_type", "Android")
     browser_type = config.get("browser_type", "Default")
     server = config.get("server", "m.facebook.com")
+    password_config = config.get("password_config", None)
 
     proxy_dict = format_proxy_for_requests(proxy_data)
     locale = proxy_data.get("locale", "en_US") if proxy_data else "en_US"
@@ -89,7 +107,7 @@ def create_worker(wid, phone_number, proxy_data, config, counter):
 
         privacy_token = privacy_token.replace('%3D', '=')
 
-        identity = generate_identity()
+        identity = generate_identity(password_config)
 
         # Step 2: POST registration with extracted tokens and generated identity
         post_headers = dict(base_headers)
@@ -176,10 +194,8 @@ def create_worker(wid, phone_number, proxy_data, config, counter):
             )
             remove_number(phone_number)
 
-            # Save successful account credentials to output file
-            os.makedirs("output", exist_ok=True)
-            with open("output/success.txt", "a", encoding="utf-8") as f:
-                f.write(f"{uid}|{identity['password']}|{cookie_str}\n")
+            # Save successful account credentials to output files
+            _save_success_output(f"{uid}|{identity['password']}|{cookie_str}")
 
         else:
             # Parse error response for debugging

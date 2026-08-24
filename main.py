@@ -18,7 +18,9 @@ from ui.display import print_lock
 from core.device_manager import select_device, select_browser, select_server
 from core.proxy_manager import get_proxy_list, create_proxy_cycle, get_no_proxy_data
 from core.worker_manager import get_worker_count
+from core.password_manager import select_password_config
 from core.number_manager import process_file_input
+from core.path_manager import is_termux_or_mobile, get_base_storage_dir, get_output_dir
 from core.counter import Counter
 from automation.create_task import create_worker
 
@@ -26,9 +28,14 @@ from automation.create_task import create_worker
 # Display current configuration state on screen
 def render_config(config_state):
     logo()
+    if is_termux_or_mobile():
+        print(f" {GREEN}[{RED}●{GREEN}] Mode          {EKL} Mobile / Termux Storage")
+        print(f" {GREEN}[{RED}●{GREEN}] Storage Folder{EKL} {get_base_storage_dir()}")
+        print(f"{LINE}")
     print(f" {GREEN}[{RED}●{GREEN}] Device Type  {EKL} {config_state.get('device', '...')}")
     print(f" {GREEN}[{RED}●{GREEN}] Browser      {EKL} {config_state.get('browser', '...')}")
     print(f" {GREEN}[{RED}●{GREEN}] Server       {EKL} {config_state.get('server', '...')}")
+    print(f" {GREEN}[{RED}●{GREEN}] Password     {EKL} {config_state.get('password', '...')}")
     print(f" {GREEN}[{RED}●{GREEN}] Proxy        {EKL} {config_state.get('proxy', '...')}")
     print(f" {GREEN}[{RED}●{GREEN}] Threads      {EKL} {config_state.get('workers', '...')}")
     print(f"{LINE}")
@@ -41,6 +48,7 @@ def run_create():
     device_type = select_device(config_state, lambda: render_config(config_state))
     browser_type = select_browser(device_type, config_state, lambda: render_config(config_state))
     server = select_server(config_state, lambda: render_config(config_state))
+    password_config = select_password_config(config_state, lambda: render_config(config_state))
     proxy_list = get_proxy_list(config_state, lambda: render_config(config_state))
     proxy_cycle = create_proxy_cycle(proxy_list)
     no_proxy_data = get_no_proxy_data()
@@ -66,6 +74,7 @@ def run_create():
         "device_type": device_type,
         "browser_type": browser_type,
         "server": server,
+        "password_config": password_config,
     }
 
     # Semaphore prevents excessive queuing beyond active workers
@@ -95,6 +104,8 @@ def run_create():
         print(f" {GREEN}[{RED}●{GREEN}] {YELLOW}Failed: {s['failed']}")
         print(f" {GREEN}[{RED}●{GREEN}] {RED}Error: {s['error']}")
         print(f" {GREEN}[{RED}●{GREEN}] {WHITE}No Account: {s['no_account']}")
+        print(f"{LINE}")
+        print(f" {GREEN}[{RED}●{GREEN}] {CYAN}Output Saved To: {get_output_dir()}")
         print(f"{LINE}")
 
     input(f"\n {WHITE}Press Enter to exit...")

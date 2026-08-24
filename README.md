@@ -1,11 +1,11 @@
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Mr-SxR/Nov-Create)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Mr-SxR/facebook-account-registration)
 
 <div align="center">
 
 ![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Open Source](https://img.shields.io/badge/Open%20Source-✓-76e033?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-0078D6?style=for-the-badge&logo=windows&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20Termux-0078D6?style=for-the-badge&logo=android&logoColor=white)
 
 </div>
 
@@ -25,38 +25,60 @@ The tool completes the Facebook registration process up to the **verification st
 
 | Feature | Description |
 |---------|-------------|
+| 📱 **Mobile & Termux Ready** | Auto-detects Termux & uses `/sdcard/facebook-account-registration/` for seamless I/O |
+| 🔑 **Flexible Passwords** | Supports strong auto-generated random passwords or fixed custom passwords |
 | 🔄 **Legacy UA Engine** | Generates verified working user-agents from Android 4-8, KaiOS, WP, BB, iOS App |
 | 🌐 **Proxy Support** | HTTP/HTTPS/SOCKS5 with auto-geolocation and locale detection |
 | 🔒 **TLS Fingerprint** | curl_cffi impersonation (Chrome 107 / Safari 15.3) per device type |
 | 📱 **6 Device Profiles** | Android Browser, KaiOS, Windows Phone, BlackBerry, iPhone App, Android App |
 | 🖥️ **10 Server Endpoints** | m.facebook, mbasic, touch, free, alpha, beta, x, limited, iphone, d |
-| 📂 **Excel + TXT Input** | Reads phone numbers from Number_List.txt or .xlsx files |
-| ⚙️ **JSON Config** | Pre-configure device, browser, server, proxy, and worker defaults |
-| 💾 **Auto Save** | Successful accounts saved to `output/success.txt` with cookies |
+| 📂 **Excel + TXT Input** | Reads phone numbers from `Number_List.txt`, `.xlsx` files, or direct file path |
+| ⚙️ **JSON Config** | Pre-configure device, server, password, proxy, and worker defaults |
+| 💾 **Auto Save** | Successful accounts saved directly with full cookie strings |
 
 ---
 
-## ⚙️ Installation
+## ⚙️ Installation & Usage
+
+### 💻 PC (Windows / Linux / macOS)
 
 ```bash
 git clone https://github.com/Mr-SxR/facebook-account-registration.git
 cd facebook-account-registration
-```
-
-### ▶️ Run
-
-```bash
-git pull
 pip install -r requirements.txt
 python main.py
 ```
 
 ---
 
+### 📱 Android (Termux)
+
+> 💡 **Important for Termux:** Allow storage permission first so the tool can read/write to your phone's storage.
+
+```bash
+# 1. Grant Storage Access
+termux-setup-storage
+
+# 2. Clone and Run
+git clone https://github.com/Mr-SxR/facebook-account-registration.git
+cd facebook-account-registration
+pip install -r requirements.txt
+python main.py
+```
+
+#### 📁 How Input & Output Work on Termux:
+1. **Auto Folder**: When launched on Termux, a folder named `/sdcard/facebook-account-registration/` is automatically managed in your internal storage.
+2. **Input**: Put your `Number_List.txt` or `.xlsx` file inside the `/sdcard/facebook-account-registration/` folder, and the tool will automatically detect it! Alternatively, you can enter any custom file path directly.
+3. **Output**: Your successful accounts are saved directly to:
+   👉 `/sdcard/facebook-account-registration/output/success.txt`
+   *(Open easily with any File Manager / Text Viewer!)*
+
+---
+
 ## 📋 Requirements
 
-- Python
-- Windows or Linux (Termux supported)
+- Python 3.8+
+- Windows, Linux, or Android (Termux)
 - Internet connection
 - Phone numbers (one per line in `Number_List.txt` or `.xlsx` file)
 - Proxy list (optional but recommended)
@@ -68,9 +90,9 @@ python main.py
 ```
 Start (python main.py)
        ↓
-Select Device Type → Select Server → Load Proxies → Set Threads
+Select Device Type → Select Server → Select Password Mode (Random/Fixed) → Load Proxies → Set Threads
        ↓
-Load Phone Numbers (TXT / Excel)
+Load Phone Numbers (Auto-detect from Local / Mobile Storage or Custom Path)
        ↓
 For each number (multi-threaded):
        ↓
@@ -82,7 +104,7 @@ Generate Identity (Name, DOB, Password)
        ↓
 POST /reg/submit/ → Check Response Cookies
        ↓
-Success (c_user cookie found) → Save to output/success.txt
+Success (c_user cookie found) → Save to Output (Mobile Storage & Local)
 ```
 
 ---
@@ -97,11 +119,13 @@ facebook-account-registration/
 ├── requirements.txt           # Python dependencies
 │
 ├── core/
+│   ├── path_manager.py        # Mobile / PC storage path & Termux auto-detection
+│   ├── password_manager.py    # Custom & random password handling
 │   ├── user_agent.py          # Legacy UA generation engine (6 device types)
 │   ├── session_builder.py     # HTTP session with TLS fingerprint + headers
 │   ├── device_manager.py      # Device selection menu and server picker
 │   ├── proxy_manager.py       # Proxy parsing, geolocation, rotation
-│   ├── number_manager.py      # Phone number loading (TXT/Excel)
+│   ├── number_manager.py      # Phone number loading (TXT/Excel/Custom Path)
 │   ├── worker_manager.py      # Thread count configuration
 │   ├── settings_manager.py    # JSON settings loader
 │   ├── locale_data.py         # Country-to-locale/timezone mappings
@@ -116,12 +140,12 @@ facebook-account-registration/
 │   └── display.py             # Thread-safe terminal output
 │
 └── output/
-    └── success.txt            # Auto-generated on successful registration
+    └── success.txt            # Output file
 ```
 
 ---
 
-## 🔧 Configuration
+## 🔧 Configuration (`setting.json`)
 
 All defaults can be set in `setting.json` to skip interactive prompts:
 
@@ -131,8 +155,17 @@ All defaults can be set in `setting.json` to skip interactive prompts:
         "ask_for_device": true,
         "default_device": "none"
     },
+    "browser_settings": {
+        "ask_for_browser": true,
+        "default_browser": "none"
+    },
     "server_settings": {
         "tools_server_id": "none"
+    },
+    "password_settings": {
+        "ask_for_password": true,
+        "default_password": "",
+        "use_random_password": true
     },
     "proxy_settings": {
         "ask_for_proxy": true,
@@ -149,8 +182,6 @@ All defaults can be set in `setting.json` to skip interactive prompts:
     }
 }
 ```
-
-> 💡 Set `"ask_for_device": false` with `"default_device": "1"` to auto-select Android Browser on every run.
 
 ---
 
@@ -197,19 +228,17 @@ All device profiles generate user-agents verified to receive the classic HTML re
 | `protocol://ip:port` | `socks5://192.168.1.1:1080` |
 | `protocol://user:pass@ip:port` | `http://admin:secret@192.168.1.1:8080` |
 
-> 🔐 Proxies are auto-detected for geolocation. The locale and timezone are set based on the proxy's country.
-
 ---
 
-## 📄 Output
+## 📄 Output Format
 
-Successful registrations are saved to `output/success.txt`:
+Successful registrations are saved to `output/success.txt` (and on Termux: `/sdcard/facebook-account-registration/output/success.txt`):
 
 ```
 uid|password|cookie_string
 ```
 
-Each line contains the Facebook user ID, generated password, and full session cookies.
+Each line contains the Facebook user ID, generated/custom password, and full session cookies.
 
 ---
 
@@ -225,7 +254,6 @@ This tool is provided for **educational and research purposes only**. The author
 [![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/+8801858094178)
 [![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/sifathub)
 
-
 > Feel free to reach out for any questions, issues, or custom requests.
 
 ---
@@ -235,4 +263,3 @@ This tool is provided for **educational and research purposes only**. The author
 *Developed & Open-Sourced by **[Mr-SxR](https://github.com/Mr-SxR)** — Speciality & Reliability*
 
 </div>
-
