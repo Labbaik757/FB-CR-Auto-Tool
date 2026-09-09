@@ -1,4 +1,8 @@
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Mr-SxR/facebook-account-registration)
+# Facebook Account Registration Tool
+
+Legacy Facebook account registration tool with multi-device profiles, proxy support, and TLS fingerprinting.
+
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Labbaik757/facebook-account-registration-tool)
 
 <div align="center">
 
@@ -11,83 +15,88 @@
 
 ---
 
-## 📌 About
+## Contents
+
+- [About](#about)
+- [Features](#features)
+- [Installation and Usage](#installation-and-usage)
+- [Requirements](#requirements)
+- [How It Works](#how-it-works)
+- [Project Structure](#project-structure)
+- [Configuration](#configuration-settingjson)
+- [Device Profiles](#device-profiles)
+- [Server Options](#server-options)
+- [Proxy Format](#proxy-format)
+- [Output Format](#output-format)
+- [Disclaimer](#disclaimer)
+- [Contact](#contact)
+
+## About
 
 **Facebook Account Registration** is a multi-threaded Python tool for automating the **No Verify (NV)** registration workflow using legacy mobile device profiles.
 
 The tool completes the Facebook registration process up to the **verification step**, but **does not submit the SMS/email verification code**. As a result, it creates **NV (unverified) accounts**, not fully verified Facebook accounts.
 
-> 🔧 Built with **curl_cffi** for TLS fingerprinting and **Faker** for realistic identity generation.
+> Built with **curl_cffi** for TLS fingerprinting and **Faker** for realistic identity generation.
 
----
-
-## 🚀 Features
+## Features
 
 | Feature | Description |
-|---------|-------------|
-| 📱 **Mobile & Termux Ready** | Auto-detects Termux & uses `/sdcard/facebook-account-registration/` for seamless I/O |
+| --- | --- |
+| 📱 **Mobile & Termux Ready** | Auto-detects Termux and uses `/sdcard/facebook-account-registration/` for seamless I/O |
 | 🔑 **Flexible Passwords** | Supports strong auto-generated random passwords or fixed custom passwords |
-| 🔄 **Legacy UA Engine** | Generates verified working user-agents from Android 4-8, KaiOS, WP, BB, iOS App |
+| 🔄 **Legacy UA Engine** | Generates verified working user-agents from Android 4-8, KaiOS, WP, BB, and iOS App |
 | 🌐 **Proxy Support** | HTTP/HTTPS/SOCKS5 with auto-geolocation and locale detection |
-| 🔒 **TLS Fingerprint** | curl_cffi impersonation (Chrome 107 / Safari 15.3) per device type |
-| 📱 **6 Device Profiles** | Android Browser, KaiOS, Windows Phone, BlackBerry, iPhone App, Android App |
-| 🖥️ **10 Server Endpoints** | m.facebook, mbasic, touch, free, alpha, beta, x, limited, iphone, d |
-| 📂 **Excel + TXT Input** | Reads phone numbers from `Number_List.txt`, `.xlsx` files, or direct file path |
+| 🔒 **TLS Fingerprint** | `curl_cffi` impersonation (Chrome 107 / Safari 15.3) per device type |
+| 📱 **6 Device Profiles** | Android Browser, KaiOS, Windows Phone, BlackBerry, iPhone App, and Android App |
+| 🖥️ **10 Server Endpoints** | m.facebook, mbasic, touch, free, alpha, beta, x, limited, iphone, and d |
+| 📂 **Excel + TXT Input** | Reads phone numbers from `Number_List.txt`, `.xlsx` files, or a direct file path |
 | ⚙️ **JSON Config** | Pre-configure device, server, password, proxy, and worker defaults |
-| 💾 **Auto Save** | Successful accounts saved directly with full cookie strings |
+| 💾 **Auto Save** | Successful accounts are saved directly with full cookie strings |
 
----
+## Installation and Usage
 
-## ⚙️ Installation & Usage
-
-### 💻 PC (Windows / Linux / macOS)
+### PC: Windows, Linux, or macOS
 
 ```bash
-git clone https://github.com/Mr-SxR/facebook-account-registration.git
-cd facebook-account-registration
+git clone https://github.com/Labbaik757/facebook-account-registration-tool.git
+cd facebook-account-registration-tool
 pip install -r requirements.txt
 python main.py
 ```
 
----
+### Android: Termux
 
-### 📱 Android (Termux)
-
-> 💡 **Important for Termux:** Allow storage permission first so the tool can read/write to your phone's storage.
+> **Important for Termux:** Allow storage permission first so the tool can read and write to your phone's storage.
 
 ```bash
-# 1. Grant Storage Access
+# Grant storage access
 termux-setup-storage
 
-# 2. Clone and Run
-git clone https://github.com/Mr-SxR/facebook-account-registration.git
-cd facebook-account-registration
+# Clone and run
+git clone https://github.com/Labbaik757/facebook-account-registration-tool.git
+cd facebook-account-registration-tool
 pip install -r requirements.txt
 python main.py
 ```
 
-#### 📁 How Input & Output Work on Termux:
-1. **Auto Folder**: When launched on Termux, a folder named `/sdcard/facebook-account-registration/` is automatically managed in your internal storage.
-2. **Input**: Put your `Number_List.txt` or `.xlsx` file inside the `/sdcard/facebook-account-registration/` folder, and the tool will automatically detect it! Alternatively, you can enter any custom file path directly.
-3. **Output**: Your successful accounts are saved directly to:
-   👉 `/sdcard/facebook-account-registration/output/success.txt`
-   *(Open easily with any File Manager / Text Viewer!)*
+#### Termux Input and Output
 
----
+1. **Auto folder:** When launched on Termux, a folder named `/sdcard/facebook-account-registration/` is automatically managed in internal storage.
+2. **Input:** Put `Number_List.txt` or an `.xlsx` file inside `/sdcard/facebook-account-registration/`. The tool automatically detects it. You can also enter any custom file path directly.
+3. **Output:** Successful accounts are saved to `/sdcard/facebook-account-registration/output/success.txt`.
 
-## 📋 Requirements
+## Requirements
 
 - Python 3.8+
 - Windows, Linux, or Android (Termux)
 - Internet connection
-- Phone numbers (one per line in `Number_List.txt` or `.xlsx` file)
-- Proxy list (optional but recommended)
+- Phone numbers, one per line in `Number_List.txt` or an `.xlsx` file
+- Proxy list, optional but recommended
 
----
+## How It Works
 
-## ▶️ How It Works
-
-```
+```text
 Start (python main.py)
        ↓
 Select Device Type → Select Server → Select Password Mode (Random/Fixed) → Load Proxies → Set Threads
@@ -107,12 +116,10 @@ POST /reg/submit/ → Check Response Cookies
 Success (c_user cookie found) → Save to Output (Mobile Storage & Local)
 ```
 
----
+## Project Structure
 
-## 🗂️ Project Structure
-
-```
-facebook-account-registration/
+```text
+facebook-account-registration-tool/
 ├── main.py                    # Entry point, orchestrates the full workflow
 ├── setting.json               # Default configuration file
 ├── Number_List.txt            # Phone number input (one per line)
@@ -129,7 +136,7 @@ facebook-account-registration/
 │   ├── worker_manager.py      # Thread count configuration
 │   ├── settings_manager.py    # JSON settings loader
 │   ├── locale_data.py         # Country-to-locale/timezone mappings
-│   └── counter.py             # Thread-safe result counter
+│   └── counter.py              # Thread-safe result counter
 │
 ├── automation/
 │   └── create_task.py         # Core registration worker logic
@@ -143,9 +150,7 @@ facebook-account-registration/
     └── success.txt            # Output file
 ```
 
----
-
-## 🔧 Configuration (`setting.json`)
+## Configuration (`setting.json`)
 
 All defaults can be set in `setting.json` to skip interactive prompts:
 
@@ -183,14 +188,12 @@ All defaults can be set in `setting.json` to skip interactive prompts:
 }
 ```
 
----
-
-## 🕵️ Device Profiles
+## Device Profiles
 
 All device profiles generate user-agents verified to receive the classic HTML registration page with extractable form tokens.
 
 | # | Profile | User-Agent Type | Why It Works |
-|---|---------|----------------|--------------|
+| --- | --- | --- | --- |
 | 1 | **Android Browser** | Android 4.4-8.1, Chrome 30-70 | Old OS + browser, legacy HTML served |
 | 2 | **KaiOS** | Nokia/Alcatel/JioPhone, Firefox 48 | Feature phone, no modern JS support |
 | 3 | **Windows Phone** | Lumia/HTC, IE Mobile 11 | IE can never run React/modern frameworks |
@@ -198,63 +201,53 @@ All device profiles generate user-agents verified to receive the classic HTML re
 | 5 | **iPhone App** | iOS 6-9, FBAN/FBIOS format | Old Facebook app format with carrier info |
 | 6 | **Android App** | Android 4-6, Dalvik + FBAN/EMA | Facebook Lite/Messenger old format |
 
-> 💡 Android Browser is the recommended default. It has the largest model pool and most realistic fingerprints.
+> **Recommended default:** Android Browser has the largest model pool and most realistic fingerprints.
 
----
-
-## 🌐 Server Options
+## Server Options
 
 | # | Domain | Notes |
-|---|--------|-------|
-| 1 | m.facebook.com | Standard mobile (recommended) |
-| 2 | mbasic.facebook.com | Basic HTML version |
-| 3 | touch.facebook.com | Touch-optimized mobile |
-| 4 | free.facebook.com | Free basics / zero-rated |
-| 5 | m.alpha.facebook.com | Alpha testing endpoint |
-| 6 | m.beta.facebook.com | Beta testing endpoint |
-| 7 | x.facebook.com | Lightweight variant |
-| 8 | limited.facebook.com | Limited connectivity version |
-| 9 | iphone.facebook.com | iOS-specific endpoint |
-| 10 | d.facebook.com | Feature phone / basic |
+| --- | --- | --- |
+| 1 | `m.facebook.com` | Standard mobile (recommended) |
+| 2 | `mbasic.facebook.com` | Basic HTML version |
+| 3 | `touch.facebook.com` | Touch-optimized mobile |
+| 4 | `free.facebook.com` | Free basics / zero-rated |
+| 5 | `m.alpha.facebook.com` | Alpha testing endpoint |
+| 6 | `m.beta.facebook.com` | Beta testing endpoint |
+| 7 | `x.facebook.com` | Lightweight variant |
+| 8 | `limited.facebook.com` | Limited connectivity version |
+| 9 | `iphone.facebook.com` | iOS-specific endpoint |
+| 10 | `d.facebook.com` | Feature phone / basic |
 
----
-
-## 🌐 Proxy Format
+## Proxy Format
 
 | Format | Example |
-|--------|---------|
+| --- | --- |
 | `ip:port` | `192.168.1.1:8080` |
 | `ip:port:user:pass` | `192.168.1.1:8080:admin:secret` |
 | `protocol://ip:port` | `socks5://192.168.1.1:1080` |
 | `protocol://user:pass@ip:port` | `http://admin:secret@192.168.1.1:8080` |
 
----
+## Output Format
 
-## 📄 Output Format
+Successful registrations are saved to `output/success.txt` and, on Termux, to `/sdcard/facebook-account-registration/output/success.txt`:
 
-Successful registrations are saved to `output/success.txt` (and on Termux: `/sdcard/facebook-account-registration/output/success.txt`):
-
-```
+```text
 uid|password|cookie_string
 ```
 
-Each line contains the Facebook user ID, generated/custom password, and full session cookies.
+Each line contains the Facebook user ID, generated or custom password, and full session cookies.
 
----
-
-## ⚠️ Disclaimer
+## Disclaimer
 
 This tool is provided for **educational and research purposes only**. The author is not responsible for any misuse. Users are solely responsible for ensuring compliance with all applicable laws and platform terms of service in their jurisdiction.
 
----
-
-## 📬 Contact
+## Contact
 
 [![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/sifathub)
 [![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/+8801858094178)
 [![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/sifathub)
 
-> Feel free to reach out for any questions, issues, or custom requests.
+Feel free to reach out for any questions, issues, or custom requests.
 
 ---
 
