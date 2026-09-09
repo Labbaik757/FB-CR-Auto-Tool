@@ -29,7 +29,6 @@ Legacy Facebook account registration tool with multi-device profiles, proxy supp
 - [Proxy Format](#proxy-format)
 - [Output Format](#output-format)
 - [Disclaimer](#disclaimer)
-- [Contact](#contact)
 
 ## About
 
@@ -240,14 +239,6 @@ Each line contains the Facebook user ID, generated or custom password, and full 
 ## Disclaimer
 
 This tool is provided for **educational and research purposes only**. The author is not responsible for any misuse. Users are solely responsible for ensuring compliance with all applicable laws and platform terms of service in their jurisdiction.
-
-## Contact
-
-[![Facebook](https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/sifathub)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)](https://wa.me/+8801858094178)
-[![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/sifathub)
-
-Feel free to reach out for any questions, issues, or custom requests.
 
 ---
 
