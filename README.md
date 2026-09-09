@@ -2,7 +2,7 @@
 
 Legacy Facebook account registration tool with multi-device profiles, proxy support, and TLS fingerprinting.
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+LBK+Automation;Facebook+Automated+Registration)](https://github.com/Labbaik757/FB-CR-Auto-Tool)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=FB+Create+%7C+LBK+Automation;Facebook+Automated+Registration)](https://github.com/Labbaik757/FB-CR-Auto-Tool)
 
 <div align="center">
 
