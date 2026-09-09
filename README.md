@@ -2,7 +2,7 @@
 
 Legacy Facebook account registration tool with multi-device profiles, proxy support, and TLS fingerprinting.
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Labbaik757/facebook-account-registration-tool)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=Fira+Code&weight=700&size=22&pause=1000&color=76e033&center=true&vCenter=true&width=700&lines=NV+Create+%7C+Mr-SxR;Facebook+Automated+Registration)](https://github.com/Labbaik757/FB-CR-Auto-Tool)
 
 <div align="center">
 
@@ -59,8 +59,8 @@ The tool completes the Facebook registration process up to the **verification st
 ### PC: Windows, Linux, or macOS
 
 ```bash
-git clone https://github.com/Labbaik757/facebook-account-registration-tool.git
-cd facebook-account-registration-tool
+git clone https://github.com/Labbaik757/FB-CR-Auto-Tool.git
+cd FB-CR-Auto-Tool
 pip install -r requirements.txt
 python main.py
 ```
@@ -74,8 +74,8 @@ python main.py
 termux-setup-storage
 
 # Clone and run
-git clone https://github.com/Labbaik757/facebook-account-registration-tool.git
-cd facebook-account-registration-tool
+git clone https://github.com/Labbaik757/FB-CR-Auto-Tool.git
+cd FB-CR-Auto-Tool
 pip install -r requirements.txt
 python main.py
 ```
@@ -119,7 +119,7 @@ Success (c_user cookie found) → Save to Output (Mobile Storage & Local)
 ## Project Structure
 
 ```text
-facebook-account-registration-tool/
+FB-CR-Auto-Tool/
 ├── main.py                    # Entry point, orchestrates the full workflow
 ├── setting.json               # Default configuration file
 ├── Number_List.txt            # Phone number input (one per line)
