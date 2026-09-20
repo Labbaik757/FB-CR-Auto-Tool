@@ -189,7 +189,7 @@ def create_worker(wid, phone_number, proxy_data, config, counter):
             cookie_str = "; ".join(f"{k}={v}" for k, v in cookies.items())
             counter.update(
                 "success", number=phone_number,
-                message=f" Name : {name} | Birthday : {identity['b_day']}/{identity['b_month']}/{identity['b_year']} \n [SxR-NV] {uid} | {identity['password']} | {cookie_str}",
+                message=f" Name : {name} | Birthday : {identity['b_day']}/{identity['b_month']}/{identity['b_year']} \n [LBK-NV] {uid} | {identity['password']} | {cookie_str}",
                 color=GREEN,
             )
             remove_number(phone_number)
